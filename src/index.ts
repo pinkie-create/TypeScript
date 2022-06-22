@@ -1,47 +1,14 @@
-const getUserData = (key: unknown, value: unknown) => {
-  if (value !== null && key !== null) {
-    let keyString = <string>key;
-    let valueString = <string>value;
-    localStorage.setItem(keyString, valueString);
-  }
-};
-getUserData("user", {
-  username: "John",
-  avatarUrl:
-    "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-});
+import { renderSearchFormBlock } from './search-form.js'
+import { renderSearchStubBlock } from './search-results.js'
+import { renderUserBlock } from './user.js'
+import { renderToast } from './lib.js'
 
-const getFavoritesAmount = (key: unknown, value: unknown) => {
-  if (value !== null && key !== null) {
-    let keyString = <string>key;
-    let valueString = <string>value;
-    localStorage.setItem(keyString, valueString);
-    console.log(localStorage);
-  }
-};
-getFavoritesAmount("favoritesAmount", "8");
-
-const renderUserBlock = (name: string, url: string, count?: number) => {
-  return { name, url, count };
-};
-
-renderUserBlock(
-  "Bob",
-  "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png"
-);
-
-interface ISearchFormData {
-  id: number;
-  name: string;
-}
-
-let employee: ISearchFormData = {
-  id: 1,
-  name: "Tom",
-};
-
-function searchData(SearchForm: ISearchFormData): void {
-  console.log("id: ", SearchForm.id, "name: ", SearchForm.name);
-}
-
-searchData(employee);
+window.addEventListener('DOMContentLoaded', () => {
+  renderUserBlock('User1', 'https://yosoyqueen.com/wp-content/uploads/2021/06/11.png',0)
+  renderSearchFormBlock('2021-05-11', '2021-06-30')
+  renderSearchStubBlock()
+  renderToast(
+    {text: 'Это пример уведомления. Используйте его при необходимости', type: 'success'},
+    {name: 'Понял', handler: () => {console.log('Уведомление закрыто')}}
+  )
+})
