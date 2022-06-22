@@ -1,4 +1,6 @@
+import { baseURL } from "./API/index.js";
 import { renderBlock } from "./lib.js";
+import { renderSearchResultsBlock } from "./search-results.js";
 
 export function renderSearchFormBlock(
   dateArrival?: string,
@@ -10,7 +12,7 @@ export function renderSearchFormBlock(
   const TWO_MONTH = 2;
   const LAST_MONTH_IN_YEAR = 11;
 
-  function getDefaultDateOfDeparture(): string {
+  function getDefaultDateArrivar(): string {
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + ONE_MONTH)
       .toString()
@@ -20,7 +22,7 @@ export function renderSearchFormBlock(
     return `${year}-${month}-${day}`;
   }
 
-  function getDefaultDateArrivar(): string {
+  function getDefaultDateOfDeparture(): string {
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + ONE_MONTH)
       .toString()
@@ -82,25 +84,59 @@ export function renderSearchFormBlock(
           <div>
             <label for="check-in-date">Дата заезда</label>
             <input id="check-in-date" type="date" value="${
-              dateArrival || getDefaultDateOfDeparture()
+              dateArrival || getDefaultDateArrivar()
             }" min="${getMinDate()}" max="${getMaxDate()}" name="checkin" />
           </div>
           <div>
             <label for="check-out-date">Дата выезда</label>
             <input id="check-out-date" type="date" value="${
-              dateOfDeparture || getDefaultDateArrivar()
+              dateOfDeparture || getDefaultDateOfDeparture()
             }" min="${getMinDate()}" max="${getMaxDate()}" name="checkout" />
           </div>
           <div>
             <label for="max-price">Макс. цена суток</label>
-            <input id="max-price" type="text" value="" name="price" class="max-price" />
+            <input id="max-price" type="number" value="5000" name="price" class="max-price" />
           </div>
           <div>
-            <div><button>Найти</button></div>
+            <div><button id="btn-search">Найти</button></div>
           </div>
         </div>
       </fieldset>
     </form>
     `
   );
+  let maxPrice = 5000;
+  const maxPriceInput = () => {
+    const value = (<HTMLInputElement>document.getElementById("max-price"))
+      .valueAsNumber;
+    if (!isNaN(value)) {
+      return Number(value);
+    }
+  };
+
+  const searchBtn = document.getElementById("btn-search");
+  searchBtn.addEventListener<"click">("click", (event: MouseEvent) => {
+    event.preventDefault();
+    maxPrice = maxPriceInput();
+    fetchPlaces();
+  });
+
+  const fetchPlaces = () => {
+    const coordinates = `59.9386,30.3141`;
+    const checkInDate =
+      new Date(dateArrival).getTime() ||
+      new Date(getDefaultDateArrivar()).getTime();
+    const checkOutDate =
+      new Date(dateOfDeparture).getTime() ||
+      new Date(getDefaultDateOfDeparture()).getTime();
+    fetch(
+      `${baseURL}places?coordinates=${coordinates}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&maxPrice=${maxPrice}`
+    )
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        renderSearchResultsBlock(data);
+      });
+  };
 }

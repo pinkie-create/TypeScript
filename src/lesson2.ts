@@ -11,16 +11,6 @@ getUserData("user", {
     "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
 });
 
-const getFavoritesAmount = (key: unknown, value: unknown) => {
-  if (value !== null && key !== null) {
-    const keyString = <string>key;
-    const valueString = <string>value;
-    localStorage.setItem(keyString, valueString);
-    console.log(localStorage);
-  }
-};
-getFavoritesAmount("favoritesAmount", "8");
-
 interface ISearchFormData {
   id: number;
   name: string;
