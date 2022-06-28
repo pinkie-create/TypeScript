@@ -73,12 +73,11 @@ export function renderSearchResultsBlock(places) {
   const list = document.getElementById("results-list");
   list.insertAdjacentHTML("afterbegin", items);
 
-  const getFavoritesAmount = (key: unknown, value: unknown) => {
-    if (value !== null && key !== null) {
-      const keyString = <string>key;
-      const valueString = <string>value;
-      localStorage.setItem(keyString, valueString);
-      console.log(localStorage);
+  const getFavoritesAmount = (key: string) => {
+    const value: unknown = localStorage.getItem(key);
+
+    if (typeof value === "number" && !isNaN(value)) {
+      return value;
     }
   };
   const toggleFavoriteItem = () => {
