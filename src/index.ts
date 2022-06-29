@@ -9,7 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
     "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
     0
   );
-  renderSearchFormBlock("2021-05-11", "2021-06-30");
+  renderSearchFormBlock();
   renderSearchStubBlock();
   renderToast(
     {

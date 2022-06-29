@@ -1,25 +1,10 @@
-const getUserData = (key: unknown, value: unknown) => {
-  if (value !== null && key !== null) {
-    const keyString = <string>key;
-    const valueString = <string>value;
-    localStorage.setItem(keyString, valueString);
-  }
-};
-getUserData("user", {
-  username: "John",
-  avatarUrl:
-    "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-});
+const getUserData = (key: string) => {
+  const value: unknown = localStorage.getItem(key);
 
-const getFavoritesAmount = (key: unknown, value: unknown) => {
-  if (value !== null && key !== null) {
-    const keyString = <string>key;
-    const valueString = <string>value;
-    localStorage.setItem(keyString, valueString);
-    console.log(localStorage);
+  if (typeof value === "number" && !isNaN(value)) {
+    return value;
   }
 };
-getFavoritesAmount("favoritesAmount", "8");
 
 interface ISearchFormData {
   id: number;
