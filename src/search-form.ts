@@ -5,7 +5,7 @@ import { renderSearchResultsBlock } from "./search-results.js";
 export function renderSearchFormBlock(
   dateArrival?: string,
   dateOfDeparture?: string
-) {
+): void {
   const ONE_DAY = 1;
   const TWO_DAY = 2;
   const ONE_MONTH = 1;

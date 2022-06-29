@@ -1,3 +1,4 @@
+import { isFavoriteItem, toggleFavoriteItem } from "./favorite.js";
 import { renderBlock } from "./lib.js";
 
 export function renderSearchStubBlock() {
@@ -26,12 +27,18 @@ export function renderEmptyOrErrorSearchBlock(reasonMessage) {
 
 export function renderSearchResultsBlock(places) {
   let items = "";
+  const { id, source } = places;
+  const toggleIdPrefix = "toggle-";
+  const toggleId = `${toggleIdPrefix}${source}_${id}`;
   if (Array.isArray(places) && places.length > 0) {
     places.forEach((place) => {
       items += `<li class="result">
         <div class="result-container">
           <div class="result-img-container">
-            <div id="favorit" class="favorites active"></div>
+            <div id=${toggleId} class="favorites ${
+        isFavoriteItem(toggleId) ? "active" : ""
+      }"
+            ></div>
             <img class="result-img" src="./img/result-1.png" alt="">
           </div>	
           <div class="result-info">
@@ -72,29 +79,8 @@ export function renderSearchResultsBlock(places) {
   );
   const list = document.getElementById("results-list");
   list.insertAdjacentHTML("afterbegin", items);
-
-  const getFavoritesAmount = (key: string) => {
-    const value: unknown = localStorage.getItem(key);
-
-    if (typeof value === "number" && !isNaN(value)) {
-      return value;
-    }
-  };
-  const toggleFavoriteItem = () => {
-    console.log("click");
-
-    // if () {
-    //   getFavoritesAmount("favoriteItems", {
-    //     id: "id",
-    //     name: "name",
-    //     url: "url",
-    //   });
-    // } else {
-    //   localStorage.removeItem("favoriteItems");
-    // }
-  };
-  const favorit = document.querySelectorAll(".favorites");
-  for (let i = 0; i < favorit.length; i++) {
-    favorit[i].addEventListener("click", toggleFavoriteItem);
-  }
 }
+const favoritesButtons = document.querySelectorAll(".favorites");
+favoritesButtons.forEach((button) => {
+  button.addEventListener("click", (event) => toggleFavoriteItem(event));
+});
