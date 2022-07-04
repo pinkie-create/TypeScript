@@ -1,40 +1,40 @@
 const database = [
   {
-    id: "vnd331",
-    title: "Radisson Royal Hotel",
+    id: 'vnd331',
+    title: 'Radisson Royal Hotel',
     details:
-      "Отель расположен в 4 минутах ходьбы от станции метро «Маяковская». К услугам гостей фитнес-центр и спа-центр с сауной и гидромассажной ванной.",
-    photos: ["vnd331.png", "vnd331.png"],
+      'Отель расположен в 4 минутах ходьбы от станции метро «Маяковская». К услугам гостей фитнес-центр и спа-центр с сауной и гидромассажной ванной.',
+    photos: ['vnd331.png', 'vnd331.png'],
     coordinates: [59.9322936, 30.3460129],
     bookedDates: [],
     price: 12000,
   },
   {
-    id: "ab2e2",
-    title: "Номера на Садовой",
+    id: 'ab2e2',
+    title: 'Номера на Садовой',
     details:
-      "Расположен в 7 минутах ходьбы от Невского проспекта. К услугам гостей круглосуточная стойка регистрации и бесплатный Wi-Fi.",
-    photos: ["ab2e2.png", "ab2e2.png"],
+      'Расположен в 7 минутах ходьбы от Невского проспекта. К услугам гостей круглосуточная стойка регистрации и бесплатный Wi-Fi.',
+    photos: ['ab2e2.png', 'ab2e2.png'],
     coordinates: [59.930325, 30.3291592],
     bookedDates: [],
     price: 4500,
   },
   {
-    id: "mvm32l",
-    title: "Мини Отель на Невском 136",
+    id: 'mvm32l',
+    title: 'Мини Отель на Невском 136',
     details:
-      "Мини-отель расположен в Санкт-Петербурге, в 5 минутах ходьбы от станции метро «Площадь Восстания» и Московского железнодорожного вокзала.",
-    photos: ["mvm32l.png", "mvm32l.png"],
+      'Мини-отель расположен в Санкт-Петербурге, в 5 минутах ходьбы от станции метро «Площадь Восстания» и Московского железнодорожного вокзала.',
+    photos: ['mvm32l.png', 'mvm32l.png'],
     coordinates: [59.9299603, 30.3658932],
     bookedDates: [],
     price: 3800,
   },
   {
-    id: "bvep12",
-    title: "Отель Усадьба Державина",
+    id: 'bvep12',
+    title: 'Отель Усадьба Державина',
     details:
-      "Прекрасный отель недалеко от Исаакиевского собора с бесплатным Wi-Fi на всей территории.",
-    photos: ["bvep12.png", "bvep12.png"],
+      'Прекрасный отель недалеко от Исаакиевского собора с бесплатным Wi-Fi на всей территории.',
+    photos: ['bvep12.png', 'bvep12.png'],
     coordinates: [59.9194966, 30.309389],
     bookedDates: [],
     price: 8700,
@@ -51,7 +51,7 @@ export function addDays(date, days) {
 }
 
 export const backendPort = 3040;
-export const localStorageKey = "flat-rent-db";
+export const localStorageKey = 'flat-rent-db';
 
 export class FlatRentSdk {
   constructor() {
@@ -89,7 +89,7 @@ export class FlatRentSdk {
   search(parameters) {
     return new Promise((resolve, reject) => {
       try {
-        if (parameters.city != "Санкт-Петербург") {
+        if (parameters.city != 'Санкт-Петербург') {
           throw new Error(`Passed unsupported city - "${parameters.city}".`);
         }
 
@@ -166,7 +166,7 @@ export class FlatRentSdk {
         if (!this._areAllDatesAvailable(flat, datesToBook)) {
           throw new Error(
             `Flat ${flat.id} is not available for dates ${datesToBook.join(
-              ","
+              ','
             )}.`
           );
         }
@@ -206,7 +206,7 @@ export class FlatRentSdk {
       checkOutDate
     );
     if (diffCheck < 0) {
-      throw new Error("Check-out date must be grater then check-in date.");
+      throw new Error('Check-out date must be grater then check-in date.');
     }
   }
 

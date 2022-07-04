@@ -1,4 +1,12 @@
-import { renderBlock } from "./lib.js";
+import {
+  renderBlock,
+  toggleFavorite,
+  toBook,
+  isFavoriteItem,
+  sortSearchResult,
+} from "./lib.js";
+import { init } from "./init/init.js";
+import { SelectOption } from "./init/selectOptions.js";
 
 export function renderSearchStubBlock() {
   renderBlock(
@@ -24,33 +32,52 @@ export function renderEmptyOrErrorSearchBlock(reasonMessage) {
   );
 }
 
-export function renderSearchResultsBlock(places) {
-  let items = "";
-  if (Array.isArray(places) && places.length > 0) {
-    places.forEach((place) => {
-      items += `<li class="result">
+export function getSearchResultsListItem() {
+  const places = init.searchResult;
+
+  let list = "";
+
+  places.forEach((place) => {
+    const { name, description, remoteness, image, price } = place;
+    const toggleIdPrefix = "toggle-";
+    const toggleId = `${toggleIdPrefix}${place.id}`;
+    const toBookIdPrefix = "to-book-";
+    const toBookId = `${toBookIdPrefix}${place.id}`;
+    list += `
+      <li class="result">
         <div class="result-container">
           <div class="result-img-container">
-            <div id="favorit" class="favorites active"></div>
-            <img class="result-img" src="./img/result-1.png" alt="">
-          </div>	
+            <div
+              id=${toggleId}
+              class="favorites ${isFavoriteItem(toggleId) ? "active" : ""}"
+            ></div>
+            <img class="result-img" src="${image}" alt="">
+          </div>
           <div class="result-info">
             <div class="result-info--header">
-              <p>${place.name}</p>
-              <p class="price">${place.price}&#8381;</p>
+              <p>${name}</p>
+              <p class="price">${price}&#8381;</p>
             </div>
-            <div class="result-info--map"><i class="map-icon"></i> 2.5км от вас</div>
-            <div class="result-info--descr">${place.description}</div>
+            <div class="result-info--map">
+              <i class="map-icon"></i>
+              ${remoteness != null ? remoteness : "-"} км от вас
+            </div>
+            <div class="result-info--descr">${description}</div>
             <div class="result-info--footer">
               <div>
-                <button>Забронировать</button>
+                <button id="${toBookId}">Забронировать</button>
               </div>
             </div>
           </div>
         </div>
-      </li>`;
-    });
-  }
+      </li>
+    `;
+  });
+
+  return list;
+}
+
+export function renderSearchResultsBlock() {
   renderBlock(
     "search-results-block",
     `
@@ -59,42 +86,33 @@ export function renderSearchResultsBlock(places) {
         <div class="search-results-filter">
             <span><i class="icon icon-filter"></i> Сортировать:</span>
             <select>
-                <option selected="">Сначала дешёвые</option>
-                <option selected="">Сначала дорогие</option>
-                <option>Сначала ближе</option>
+                <option selected="">${SelectOption.Ascending}</option>
+                <option selected="">${SelectOption.Descending}</option>
+                <option>${SelectOption.Closer}</option>
             </select>
         </div>
     </div>
-    <ul class="results-list" id="results-list">
-     
+    <ul id="results-list" class="results-list">
+      ${getSearchResultsListItem()}
     </ul>
     `
   );
-  const list = document.getElementById("results-list");
-  list.insertAdjacentHTML("afterbegin", items);
 
-  const getFavoritesAmount = (key: string) => {
-    const value: unknown = localStorage.getItem(key);
+  const favoritesButtons = document.querySelectorAll(".favorites");
+  favoritesButtons.forEach((button) => {
+    button.addEventListener("click", (event) => toggleFavorite(event));
+  });
 
-    if (typeof value === "number" && !isNaN(value)) {
-      return value;
-    }
-  };
-  const toggleFavoriteItem = () => {
-    console.log("click");
+  const toBookButtons = document.querySelectorAll(
+    ".result-info--footer button"
+  );
+  toBookButtons.forEach((button) => {
+    button.addEventListener("click", (event) => toBook(event));
+  });
+  const selectFilter = document.querySelector(".search-results-filter select");
+  selectFilter.addEventListener("change", sortSearchResult);
+}
 
-    // if () {
-    //   getFavoritesAmount("favoriteItems", {
-    //     id: "id",
-    //     name: "name",
-    //     url: "url",
-    //   });
-    // } else {
-    //   localStorage.removeItem("favoriteItems");
-    // }
-  };
-  const favorit = document.querySelectorAll(".favorites");
-  for (let i = 0; i < favorit.length; i++) {
-    favorit[i].addEventListener("click", toggleFavoriteItem);
-  }
+export function renderSearchResultsList() {
+  renderBlock("results-list", `${getSearchResultsListItem()}`);
 }

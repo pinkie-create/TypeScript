@@ -1,142 +1,215 @@
-import { baseURL } from "./API/index.js";
 import { renderBlock } from "./lib.js";
+import { addDays } from "./helpers/add-days.js";
+import { getDateFromCurrent } from "./helpers/get-date-from-current.js";
+import { getDateString } from "./helpers/get-date-string.js";
 import { renderSearchResultsBlock } from "./search-results.js";
+import { Provider } from "./init/domain/provider.js";
+import { Providers } from "./init/domain/providers.js";
+import { getCoordinates } from "./helpers/get-coordinates.js";
+import { SearchFilter } from "./init/domain/search-filter.js";
+import { Place } from "./init/domain/place.js";
+import { init } from "./init/init.js";
+import { timer } from "./timer.js";
+import { Coordinates } from "./API/flat-rent-sdk/flat-rent-sdk.js";
+import { HomyProvider } from "./API/homy-api/homy-api-provider.js";
+import { FlatRentProvider } from "./API/flat-rent-sdk/flat-rent-sdk-provider.js";
+
+export interface SearchFormData {
+  filter: SearchFilter;
+  providers: Provider[];
+}
+
+export function getSearchFormData(id: string): SearchFormData | null {
+  const form = document.getElementById(id);
+
+  if (form instanceof HTMLFormElement) {
+    const formData = new FormData(form);
+
+    const coordinates: Coordinates = getCoordinates(
+      formData.get("coordinates").toString()
+    );
+
+    const providers: Provider[] = formData.getAll("provider").map((value) => {
+      if (value === Providers.HomyAPI) {
+        return new HomyProvider();
+      }
+      if (value === Providers.FlatRentSDK) {
+        return new FlatRentProvider(coordinates);
+      }
+    });
+
+    const city = formData.get("city").toString();
+    const checkInDate = new Date(formData.get("checkIn").toString());
+    const checkOutDate = new Date(formData.get("checkOut").toString());
+    const price = formData.get("price").toString();
+    const priceLimit = price != "" ? Number(price) : null;
+
+    const filter: SearchFilter = {
+      checkInDate,
+      checkOutDate,
+      coordinates: coordinates.join(","),
+    };
+
+    if (city != null) filter.city = city;
+    if (priceLimit != null) filter.priceLimit = priceLimit;
+
+    return { filter, providers };
+  }
+}
+
+export async function search(data: SearchFormData): Promise<void> {
+  const { providers, filter } = data;
+  const searchResult = await Promise.all(
+    providers.map((provider) => provider.search(filter))
+  );
+
+  const places: Place[] = [].concat(...searchResult);
+
+  init.searchResult = places;
+  init.sortSearchResultByDescendingPrice();
+}
+
+export async function searchPlaceHandler(event: Event): Promise<void> {
+  event.preventDefault();
+  const formId = "search-form";
+  const fromData = getSearchFormData(formId);
+
+  await search(fromData);
+
+  renderSearchResultsBlock();
+  if (timer.id != null) timer.stop();
+  timer.start(3e5);
+}
+
+export function checkProviderHandler(
+  checkbox: HTMLInputElement,
+  checkboxes: NodeListOf<Element>
+): void {
+  for (const checkbox of checkboxes) {
+    if (checkbox instanceof HTMLInputElement && checkbox.checked) return;
+  }
+  checkbox.checked = !checkbox.checked;
+}
 
 export function renderSearchFormBlock(
-  dateArrival?: string,
-  dateOfDeparture?: string
-) {
+  checkInDate?: Date,
+  checkOutDate?: Date
+): void {
   const ONE_DAY = 1;
   const TWO_DAY = 2;
-  const ONE_MONTH = 1;
   const TWO_MONTH = 2;
-  const LAST_MONTH_IN_YEAR = 11;
+  const nowDate = new Date();
+  const todayDate = new Date(
+    nowDate.getFullYear(),
+    nowDate.getMonth(),
+    nowDate.getDate()
+  );
 
-  function getDefaultDateArrivar(): string {
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + ONE_MONTH)
-      .toString()
-      .padStart(2, "0");
-    const day = (new Date().getDate() + ONE_DAY).toString().padStart(2, "0");
+  const minDate = todayDate;
+  const maxDate = getDateFromCurrent(todayDate, TWO_MONTH);
 
-    return `${year}-${month}-${day}`;
-  }
+  const isCheckInDateValid = checkInDate && checkInDate >= minDate;
+  const isCheckOutDateValid = checkOutDate && checkOutDate <= maxDate;
 
-  function getDefaultDateOfDeparture(): string {
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + ONE_MONTH)
-      .toString()
-      .padStart(2, "0");
-    const day = (new Date().getDate() + ONE_DAY + TWO_DAY)
-      .toString()
-      .padStart(2, "0");
+  const defaultCheckInDate = addDays(todayDate, ONE_DAY);
+  const defaultCheckOutDate = isCheckInDateValid
+    ? addDays(checkInDate, TWO_DAY)
+    : addDays(defaultCheckInDate, TWO_DAY);
 
-    return `${year}-${month}-${day}`;
-  }
-
-  function getMinDate(): string {
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + ONE_MONTH)
-      .toString()
-      .padStart(2, "0");
-    const day = new Date().getDate().toString().padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  }
-
-  function getMaxDate() {
-    const year = new Date().getFullYear();
-    const nextMonth = (new Date().getMonth() + TWO_MONTH)
-      .toString()
-      .padStart(2, "0");
-    const day = new Date().getDate().toString().padStart(2, "0");
-
-    function getLastDayNextMonth() {
-      const isLastMonthInYear = new Date().getMonth() === LAST_MONTH_IN_YEAR;
-
-      if (isLastMonthInYear) {
-        // todo следующий год
-      } else {
-        return new Date(year, Number(nextMonth), 0);
-      }
-    }
-
-    return `${year}-${nextMonth}-${getLastDayNextMonth()}`;
-  }
+  const minDateStr = getDateString(minDate);
+  const maxDateStr = getDateString(maxDate);
+  const checkInDateStr = isCheckInDateValid
+    ? getDateString(checkInDate)
+    : getDateString(defaultCheckInDate);
+  const checkOutDateStr = isCheckOutDateValid
+    ? getDateString(checkOutDate)
+    : getDateString(defaultCheckOutDate);
 
   renderBlock(
     "search-form-block",
     `
-    <form>
-      <fieldset class="search-filedset">
+    <form id="search-form">
+      <fieldset class="search-fieldset">
         <div class="row">
           <div>
             <label for="city">Город</label>
-            <input id="city" type="text" disabled value="Санкт-Петербург" />
-            <input type="hidden" disabled value="59.9386,30.3141" />
+            <input id="city" type="text" value="Санкт-Петербург" name="city"/>
+            <input type="hidden" value="59.9386,30.3141" name="coordinates" />
           </div>
-          <!--<div class="providers">
-            <label><input type="checkbox" name="provider" value="homy" checked /> Homy</label>
-            <label><input type="checkbox" name="provider" value="flat-rent" checked /> FlatRent</label>
-          </div>--!>
+          <div class="providers">
+            <label>
+              <input
+                type="checkbox"
+                name="provider"
+                value="${Providers.HomyAPI}"
+                checked
+              />
+              Homy
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="provider"
+                value="${Providers.FlatRentSDK}"
+                checked
+              />
+              FlatRent
+            </label>
+          </div>
         </div>
         <div class="row">
           <div>
             <label for="check-in-date">Дата заезда</label>
-            <input id="check-in-date" type="date" value="${
-              dateArrival || getDefaultDateArrivar()
-            }" min="${getMinDate()}" max="${getMaxDate()}" name="checkin" />
+            <input
+              id="check-in-date"
+              type="date"
+              value="${checkInDateStr}"
+              min="${minDateStr}"
+              max="${maxDateStr}"
+              name="checkIn"
+            />
           </div>
           <div>
             <label for="check-out-date">Дата выезда</label>
-            <input id="check-out-date" type="date" value="${
-              dateOfDeparture || getDefaultDateOfDeparture()
-            }" min="${getMinDate()}" max="${getMaxDate()}" name="checkout" />
+            <input
+              id="check-out-date"
+              type="date"
+              value="${checkOutDateStr}"
+              min="${minDateStr}"
+              max="${maxDateStr}"
+              name="checkOut"
+            />
           </div>
           <div>
             <label for="max-price">Макс. цена суток</label>
-            <input id="max-price" type="number" value="5000" name="price" class="max-price" />
+            <input
+              id="max-price"
+              type="text"
+              value="5000"
+              name="price"
+              class="max-price"
+            />
           </div>
           <div>
-            <div><button id="btn-search">Найти</button></div>
+            <button class="search-form-button">Найти</button>
           </div>
         </div>
       </fieldset>
     </form>
     `
   );
-  let maxPrice = 5000;
-  const maxPriceInput = () => {
-    const value = (<HTMLInputElement>document.getElementById("max-price"))
-      .valueAsNumber;
-    if (!isNaN(value)) {
-      return Number(value);
-    }
-  };
 
-  const searchBtn = document.getElementById("btn-search");
-  searchBtn.addEventListener<"click">("click", (event: MouseEvent) => {
-    event.preventDefault();
-    maxPrice = maxPriceInput();
-    fetchPlaces();
-  });
+  const searchForm = document.getElementById("search-form");
+  searchForm.addEventListener("submit", searchPlaceHandler);
 
-  const fetchPlaces = () => {
-    const coordinates = `59.9386,30.3141`;
-    const checkInDate =
-      new Date(dateArrival).getTime() ||
-      new Date(getDefaultDateArrivar()).getTime();
-    const checkOutDate =
-      new Date(dateOfDeparture).getTime() ||
-      new Date(getDefaultDateOfDeparture()).getTime();
-    fetch(
-      `${baseURL}places?coordinates=${coordinates}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&maxPrice=${maxPrice}`
-    )
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        renderSearchResultsBlock(data);
-      });
-  };
+  const checkboxProvider = document.querySelectorAll('input[name="provider"]');
+
+  checkboxProvider.forEach((checkbox) =>
+    checkbox.addEventListener("click", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement) {
+        checkProviderHandler(target, checkboxProvider);
+      }
+    })
+  );
 }
